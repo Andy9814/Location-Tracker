@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">LocationTracker</string>
+    <string name="title_activity_maps">Location Tracker</string>
+    <string name="mapStr">Map</string>
+    <string name="pastPlacesStr">Places I been</string>
+    <string name="wannaGoPlacesStr">Places I Wish</string>
+    <string name="aboutStr">About</string>
+    <string name="service_not_available">Service Not Avaliabel</string>
+    <string name="invalid_lat_long_used">Invalid Lat Long used</string>
+    <string name="no_address_found">No Address Found</string>
+    <string name="address_found">Address Found</string>
+</resources>
