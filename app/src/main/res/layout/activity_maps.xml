@@ -6,4 +6,35 @@
     android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MapsActivity" />
+    tools:context=".MapsActivity">
+
+    <Button
+        android:id="@+id/currLocaBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|top"
+        android:layout_marginTop="20dp"
+        android:background="#80000000"
+        android:button="@null"
+        android:onClick="onClickCurrentLocation"
+        android:padding="10dp"
+        android:paddingRight="10dp"
+        android:text="@string/currLoco" />
+
+    <EditText
+        android:id="@+id/txtEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_margin="5dp"
+        android:textColor= "#000000"
+        android:textSize="25dp"
+        android:inputType="text"
+        android:imeOptions="actionDone"
+        android:background="#FFA500"
+        />
+
+</fragment>
+
+    <!--        android:background="?android:attr/selectableItemBackground"-->
+    <!--        style="@style/MyEditTextStyle"-->

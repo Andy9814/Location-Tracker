@@ -6,14 +6,23 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -35,19 +44,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-
+// wishto = 1
+// beento = 2
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
-        GoogleMap.OnMyLocationClickListener,
-        GoogleMap.OnMyLocationButtonClickListener
+        GoogleMap.OnMyLocationClickListener
+       // GoogleMap.OnMyLocationButtonClickListener
 {
     private GoogleMap mMap;
     Marker beenToMarker;
     Marker wishToMarker;
     private List<Marker> beenToMarkerList;
     private List<Marker> wishToMarkerList;
+    private List<LatLng> beenToLocationList;
+    private List<LatLng> wishToLocationList;
     private LatLng CurrentLocation;
+    private LatLng previousLocation;
+    private LatLng tvLoco;
     private final String TAG ="MyMaps";
     FusedLocationProviderClient fusedLocationClient ;
+    Button currLocBtn ;
+    EditText et;
 //    SharedPreferences prefBeenTo= getSharedPreferences("mypreffile",MODE_PRIVATE);
 //    SharedPreferences.Editor editor = prefBeenTo.edit();
    // SharedPreferences prefWishTo = getSharedPreferences("mypreffile",MODE_PRIVATE);
@@ -67,13 +83,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         }
 
+        currLocBtn = findViewById(R.id.currLocaBtn);
+        et = findViewById(R.id.txtEdit);
+        et.setVisibility(View.INVISIBLE);
         // Initialize the fusedLocationClient to get current loc
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        beenToMarkerList = new ArrayList<Marker>();
+        wishToMarkerList = new ArrayList<Marker>();
+        beenToLocationList = new ArrayList<LatLng>();
+        wishToLocationList = new ArrayList<LatLng>();
+        LoadPreferences();
 
-        if(beenToMarkerList == null && wishToMarkerList == null) {
-            beenToMarkerList = new ArrayList<Marker>();
-            wishToMarkerList = new ArrayList<Marker>();
-        }
 
     }
 
@@ -82,8 +102,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onResume();
         Log.d("sdf" ,"inside the onResume");
         getLocation();
-        if(mMap!= null)
-            LoadPreferences();
+//        if(mMap!= null)
+//            LoadPreferences();
+
 
     }
 
@@ -93,27 +114,76 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            mMap.setMyLocationEnabled(true);
-        } else {
-            // Show rationale and request permission.
+           // mMap.setMyLocationEnabled(true);
         }
-        mMap.setOnMyLocationButtonClickListener(this);
-        mMap.setOnMyLocationClickListener(this);
+//        mMap.setOnMyLocationButtonClickListener(this);
+//        mMap.setOnMyLocationClickListener(this);
         getLocation();
-        if(mMap!= null)
-            LoadPreferences();
+//        if(mMap!= null)
+//            LoadPreferences();
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng)
             {
+               // et.setVisibility(View.GONE);
                 Log.d(TAG, "onMapClick: inside onclick map");
-                wishToMarker =    mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                        .title(getCurrAddress(latLng)).snippet("Your location Lat:"+latLng.latitude+",Lng:"+latLng.longitude));
+//               mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+//                       .title(getCurrAddress(latLng)).snippet("Your location Lat:"+latLng.latitude+",Lng:"+latLng.longitude)).showInfoWindow();
+                wishToMarker = DrawMarker(1,latLng);
                 wishToMarkerList.add(wishToMarker);
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             }
         });
+
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                final Marker x;
+                x= marker;
+             //   marker.setTitle();
+                et.setVisibility(View.GONE);
+                Toast.makeText(MapsActivity.this, "This is my Toast message!",
+                        Toast.LENGTH_LONG).show();
+               // et.setText("");
+                et.setVisibility(View.VISIBLE);
+                et.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(et, InputMethodManager.SHOW_IMPLICIT);
+              //  marker.setTitle(marker.getTitle() +" "+et.getText().toString());
+                et.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                        if (i == EditorInfo.IME_ACTION_DONE) {
+                            et.setVisibility(View.GONE);
+                            InputMethodManager imm = (InputMethodManager) textView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(textView.getWindowToken(), 0);
+                            x.setTitle(x.getTitle() +" "+et.getText().toString());
+                            return true;
+                        }
+                        return false;                    }
+                });
+                marker = x;
+            }
+        });
+        if(beenToLocationList.size() != 0)
+        {
+                for(int i = 0; i <beenToLocationList.size(); i++){
+                    LatLng loco = beenToLocationList.get(i);
+                 Marker   e =                 mMap.addMarker(new MarkerOptions().position(loco).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                            .title(getCurrAddress(loco)).snippet("Your location Lat:"+loco.latitude+",Lng:"+loco.longitude).visible(true));
+                    beenToMarkerList.add(e);
+                }
+        }
+        if(wishToLocationList.size() != 0)
+        {
+            for(int i = 0; i <wishToLocationList.size(); i++){
+                LatLng loco = wishToLocationList.get(i);
+                Marker  e =                 mMap.addMarker(new MarkerOptions().position(loco).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                        .title(getCurrAddress(loco)).snippet("Your location Lat:"+loco.latitude+",Lng:"+loco.longitude).visible(true));
+                wishToMarkerList.add(e);
+            }
+        }
 
     }
     public void getLocation(){
@@ -127,10 +197,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             if (lastLocation != null) {
                                 double lat = lastLocation.getLatitude(), lon = lastLocation.getLongitude();
                                 CurrentLocation = new LatLng(lat, lon);
+                                beenToMarker =     DrawMarker(2,CurrentLocation);
 
-                                beenToMarker =                 mMap.addMarker(new MarkerOptions().position(CurrentLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                                        .title(getCurrAddress(CurrentLocation)).snippet("Your location Lat:"+CurrentLocation.latitude+",Lng:"+CurrentLocation.longitude));
-                                beenToMarkerList.add(beenToMarker);
+//                                beenToMarker =                 mMap.addMarker(new MarkerOptions().position(CurrentLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+//                                        .title(getCurrAddress(CurrentLocation)).snippet("Your location Lat:"+CurrentLocation.latitude+",Lng:"+CurrentLocation.longitude));
+//                                if(previousLocation != CurrentLocation) {
+////                                    beenToMarkerList.add(beenToMarker);
+////                                previousLocation= CurrentLocation;
+////                                }
+                                float[] distance = new float[1];
+                                Location.distanceBetween(previousLocation.latitude, previousLocation.longitude, CurrentLocation.latitude, CurrentLocation.longitude, distance);
+                                if (distance[0] > 2.0) {
+                                    beenToMarkerList.add(beenToMarker);
+                               previousLocation= CurrentLocation;
+                                }
                                 mMap.moveCamera(CameraUpdateFactory.newLatLng(CurrentLocation));
                             }
                         }
@@ -153,7 +233,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void SavePreferences(){
         SharedPreferences sharedPreferences = getSharedPreferences("mypreffile",MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-
         editor.putInt("beenTolistSize", beenToMarkerList.size());
         editor.putInt("wishTolistSize", wishToMarkerList.size());
 
@@ -171,46 +250,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 editor.putString("wish_title"+i,       wishToMarkerList.get(i).getTitle());
             }
         }
+
+            editor.putFloat("prev_lat", (float) previousLocation.latitude);
+            editor.putFloat("prev_long", (float) previousLocation.longitude);
+
+        //   editor.putString("prev_title",       previousLocation.getTitle());
 //        Set<Marker> set = new HashSet<Marker>();
 //        set.addAll(beenToMarkerList.);
 //        editor.putStringSet("DATE_LIST", set);
         editor.commit();
     }
 
+    // wont set markers coz mMap is empty
     private void LoadPreferences(){
         SharedPreferences sharedPreferences = getSharedPreferences("mypreffile",MODE_PRIVATE);
-
         int beenToSize = sharedPreferences.getInt("beenTolistSize", 0);
         int wishToSize = sharedPreferences.getInt("wishTolistSize", 0);
         if(beenToSize > 0) {
-
             for (int i = 0; i < beenToSize; i++) {
                 LatLng mLocation;
                 double been_lat = (double) sharedPreferences.getFloat("been_lat" + i, 0);
                 double been_long = (double) sharedPreferences.getFloat("been_long" + i, 0);
-                // String title = sharedPreferences.getString("been_title"+i,"NULL");
+                 String title = sharedPreferences.getString("been_title"+i,"NULL");
                 mLocation = new LatLng(been_lat, been_long);
-                mMap.addMarker(new MarkerOptions().position(mLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                        .title(getCurrAddress(mLocation)).snippet("Your location Lat:" + mLocation.latitude + ",Lng:" + mLocation.longitude));
-
-                // markerList.add(mMap.addMarker(new MarkerOptions().position(new LatLng(lat, longit)).title(title)));
+                beenToLocationList.add(mLocation);
             }
         }
         if(wishToSize > 0) {
-
             for (int i = 0; i < wishToSize; i++) {
                 LatLng mLocation;
                 double wish_lat = (double) sharedPreferences.getFloat("wish_lat" + i, 0);
                 double wish_long = (double) sharedPreferences.getFloat("wish_long" + i, 0);
                 String title = sharedPreferences.getString("wish_title" + i, "NULL");
                 mLocation = new LatLng(wish_lat, wish_long);
-
-                mMap.addMarker(new MarkerOptions().position(mLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                        .title(getCurrAddress(mLocation)).snippet("Your location Lat:" + mLocation.latitude + ",Lng:" + mLocation.longitude));
-
-                // markerList.add(mMap.addMarker(new MarkerOptions().position(new LatLng(lat, longit)).title(title)));
+                wishToLocationList.add(mLocation);
             }
         }
+
+        double tvLat = (double) sharedPreferences.getFloat("prev_lat" ,0);
+        double tvLong= (double) sharedPreferences.getFloat("prev_long" , 0);
+        previousLocation  = new LatLng(tvLat,tvLong);
+
     }
 
     private String getCurrAddress(LatLng location)
@@ -267,11 +347,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
     }
 
-    @Override
-    public boolean onMyLocationButtonClick() {
-        Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
-        // Return false so that we don't consume the event and the default behavior still occurs
-        // (the camera animates to the user's current position).
-        return false;
+// only use this when you have map initialized
+    public Marker DrawMarker(int i , LatLng mLocation ){
+        Marker doodle =null;
+        if(i == 1)
+            doodle = mMap.addMarker(new MarkerOptions().position(mLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                    .title(getCurrAddress(mLocation)).snippet("Your location Lat:" + mLocation.latitude + ",Lng:" + mLocation.longitude));
+        else if( i == 2)
+            doodle = mMap.addMarker(new MarkerOptions().position(mLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                    .title(getCurrAddress(mLocation)).snippet("Your location Lat:" + mLocation.latitude + ",Lng:" + mLocation.longitude));
+
+        return  doodle;
     }
+
+    public void onClickCurrentLocation(View view) {
+        mMap.clear();
+        beenToMarkerList.clear();
+        wishToMarkerList.clear();
+
+        previousLocation = new LatLng(0,0);
+        SavePreferences();
+
+    }
+
+
+
+
 }

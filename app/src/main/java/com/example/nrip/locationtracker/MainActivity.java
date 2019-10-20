@@ -39,5 +39,9 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, wishPlaces.class);
             startActivity(intent);
         }
+        else if (view.getId() == aboutBtn.getId()) {
+            Intent intent = new Intent(this, AboutActivity.class);
+            startActivity(intent);
+        }
     }
 }

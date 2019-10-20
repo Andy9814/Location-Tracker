@@ -9,4 +9,7 @@
     <string name="invalid_lat_long_used">Invalid Lat Long used</string>
     <string name="no_address_found">No Address Found</string>
     <string name="address_found">Address Found</string>
+    <string name="currLoco">Clear</string>
+    <string name="about">Hi My Name Nripdeep Singh.\nThis is a Location Tracker.\nClick the button to go to the question.\n&#169;Copyright 2019, Nripdeep Singh
+    </string>
 </resources>

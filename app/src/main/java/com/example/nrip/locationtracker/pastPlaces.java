@@ -12,11 +12,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class pastPlaces extends AppCompatActivity {
     private RecyclerView pastRecylerView;
     private RecyclerView.Adapter pastAdapter;
     private RecyclerView.LayoutManager pastLayoutManager;
+ //   private ItemList itList ;
 
     ArrayList<String> beentL = new ArrayList<String>();
  //   ArrayList<String> wishtL= new ArrayList<String>();
@@ -28,6 +30,7 @@ public class pastPlaces extends AppCompatActivity {
         setContentView(R.layout.activity_past_places);
 
 
+        ArrayList<ItemList> itList = new ArrayList<>();
 
 
         SharedPreferences sharedPreferences = getSharedPreferences("mypreffile", MODE_PRIVATE);
@@ -42,7 +45,13 @@ public class pastPlaces extends AppCompatActivity {
                 String title = sharedPreferences.getString("been_title" + i, "NULL");
                 mLocation = new LatLng(been_lat, been_long);
 
+                itList.add(new ItemList(
+                        R.drawable.ic_launcher_background,title,
+                        Double.toString(been_lat)+"--"+Double.toString(been_long)
+
+                ));
                 beentL.add(title);
+
             }
         }
 
@@ -51,7 +60,7 @@ public class pastPlaces extends AppCompatActivity {
         pastRecylerView = findViewById(R.id.pastRecyclerV);
         pastRecylerView.setHasFixedSize(true);
         pastLayoutManager = new LinearLayoutManager(this);
-        pastAdapter = new RecyclerAdapter(beentL);
+        pastAdapter = new RecyclerAdapter(itList);
 
         pastRecylerView.setLayoutManager(pastLayoutManager);
         pastRecylerView.setAdapter(pastAdapter);
